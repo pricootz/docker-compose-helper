@@ -1,6 +1,6 @@
 # 🚀 Docker Compose Helper
 
-![Docker Compose Helper Screenshot](https://via.placeholder.com/800x400?text=Docker+Compose+Helper)
+![Docker Compose Helper Screenshot](./src/assets/docker-compose-helper-screenshot.png)
 
 A web-based tool to analyze `docker-compose.yml` files, extract environment variables, and generate proper `.env` configuration files.
 
