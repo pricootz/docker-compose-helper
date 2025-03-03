@@ -1,0 +1,55 @@
+{
+  "appName": "Docker Compose Helper",
+  "header": {
+    "darkMode": "Switch to dark mode",
+    "lightMode": "Switch to light mode",
+    "github": "View on GitHub"
+  },
+  "editor": {
+    "title": "Docker Compose File",
+    "placeholder": "# Paste your docker-compose.yml here...",
+    "uploadFile": "Upload File",
+    "analyze": "Analyze Configuration",
+    "error": "Invalid YAML: {{message}}"
+  },
+  "variables": {
+    "title": "Detected Environment Variables",
+    "empty": "No variables detected. Paste a docker-compose.yml to start.",
+    "inputPlaceholder": "Enter a value...",
+    "modified": "Modified",
+    "reset": "Reset",
+    "resetAll": "Reset all"
+  },
+  "actions": {
+    "generateEnv": "Generate .env",
+    "generateEnvTooltip": "Download a .env file with all configured variables",
+    "generateCompose": "Generate docker-compose",
+    "generateComposeTooltip": "Generate a docker-compose.yml with variables replaced",
+    "save": "Save",
+    "saveTooltip": "Save this configuration for future use"
+  },
+  "saveDialog": {
+    "title": "Save Configuration",
+    "placeholder": "Configuration name",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "savedConfigs": {
+    "title": "Saved Configurations:",
+    "loadTooltip": "Load this configuration",
+    "deleteTooltip": "Delete this configuration"
+  },
+  "categories": {
+    "database": "Database",
+    "paths": "Paths",
+    "ports": "Ports",
+    "security": "Security",
+    "other": "Other"
+  },
+  "validation": {
+    "port": "Invalid port (1-65535)",
+    "required": "Field required",
+    "password": "Password too short (min 8 characters)",
+    "path": "Invalid path"
+  }
+}

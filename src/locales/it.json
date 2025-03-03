@@ -1,0 +1,55 @@
+{
+  "appName": "Docker Compose Helper",
+  "header": {
+    "darkMode": "Passa al tema scuro",
+    "lightMode": "Passa al tema chiaro",
+    "github": "Visualizza su GitHub"
+  },
+  "editor": {
+    "title": "Docker Compose File",
+    "placeholder": "# Incolla qui il tuo docker-compose.yml...",
+    "uploadFile": "Carica File",
+    "analyze": "Analizza Configurazione",
+    "error": "YAML non valido: {{message}}"
+  },
+  "variables": {
+    "title": "Variabili Ambiente Rilevate",
+    "empty": "Nessuna variabile rilevata. Incolla un docker-compose.yml per iniziare.",
+    "inputPlaceholder": "Inserisci un valore...",
+    "modified": "Modificato",
+    "reset": "Ripristina",
+    "resetAll": "Ripristina tutti"
+  },
+  "actions": {
+    "generateEnv": "Genera .env",
+    "generateEnvTooltip": "Scarica un file .env con tutte le variabili configurate",
+    "generateCompose": "Genera docker-compose",
+    "generateComposeTooltip": "Genera un docker-compose.yml con le variabili sostituite",
+    "save": "Salva",
+    "saveTooltip": "Salva questa configurazione per utilizzo futuro"
+  },
+  "saveDialog": {
+    "title": "Salva Configurazione",
+    "placeholder": "Nome della configurazione",
+    "cancel": "Annulla",
+    "save": "Salva"
+  },
+  "savedConfigs": {
+    "title": "Configurazioni Salvate:",
+    "loadTooltip": "Carica questa configurazione",
+    "deleteTooltip": "Elimina questa configurazione"
+  },
+  "categories": {
+    "database": "Database",
+    "paths": "Percorsi",
+    "ports": "Porte",
+    "security": "Sicurezza",
+    "other": "Altre"
+  },
+  "validation": {
+    "port": "Porta non valida (1-65535)",
+    "required": "Campo obbligatorio",
+    "password": "Password troppo corta (min 8 caratteri)",
+    "path": "Percorso non valido"
+  }
+}
