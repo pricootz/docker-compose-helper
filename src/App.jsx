@@ -829,34 +829,17 @@ function App() {
                 </div>
               </div>
             </div>
-
-            {/* Dropdown per i template */}
-            <div className="relative group">
+            {/* Pulsante per generare docker-compose modificato */}
+            {variables.length > 0 && (
               <button
-                className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
-                title={t('templates.loadTemplate')}
+                onClick={generateModifiedDockerCompose}
+                className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-indigo-500 hover:bg-indigo-600 text-white'}`}
+                title={t('actions.generateComposeTooltip')}
               >
-                <Plus className="h-4 w-4" />
-                {t('templates.loadTemplate')}
+                <Download className="h-4 w-4" />
+                {t('actions.generateCompose')}
               </button>
-              <div className={`absolute left-0 mt-2 w-72 rounded-md shadow-lg z-10 hidden group-hover:block ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                <div className="py-1">
-                  {Object.entries(dockerComposeTemplates).map(([id, template]) => (
-                    <button
-                      key={id}
-                      onClick={() => loadTemplate(id)}
-                      className={`w-full text-left px-4 py-2 flex items-center gap-2 ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'}`}
-                    >
-                      {template.icon === 'database' && <Database className="h-4 w-4" />}
-                      {template.icon === 'server' && <Server className="h-4 w-4" />}
-                      {template.icon === 'code' && <Code className="h-4 w-4" />}
-                      {template.icon === 'fileText' && <FileText className="h-4 w-4" />}
-                      <span>{template.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
