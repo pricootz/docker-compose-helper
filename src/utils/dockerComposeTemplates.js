@@ -3,6 +3,7 @@ export const dockerComposeTemplates = {
   lamp: {
     name: "LAMP Stack (Linux, Apache, MySQL, PHP)",
     icon: "database",
+    description: "Stack completo per sviluppo web PHP con Apache e MySQL. Include phpMyAdmin per la gestione del database.",
     template: `version: '3'
 
 services:
@@ -55,6 +56,7 @@ volumes:
   wordpress: {
     name: "WordPress",
     icon: "fileText",
+    description: "Ambiente WordPress completo con database MySQL per lo sviluppo o hosting di siti web WordPress.",
     template: `version: '3'
 
 services:
@@ -94,6 +96,7 @@ volumes:
   mern: {
     name: "MERN Stack (MongoDB, Express, React, Node.js)",
     icon: "code",
+    description: "Stack completo per applicazioni JavaScript con MongoDB, Express, React e Node.js, ideale per sviluppo full-stack JavaScript.",
     template: `version: '3'
 
 services:
@@ -147,6 +150,7 @@ volumes:
   nginx_proxy: {
     name: "Nginx Reverse Proxy",
     icon: "server",
+    description: "Configurazione Nginx come reverse proxy per le tue applicazioni web, con supporto per più servizi e SSL.",
     template: `version: '3'
 
 services:
@@ -185,6 +189,7 @@ services:
   postgres: {
     name: "PostgreSQL & pgAdmin",
     icon: "database",
+    description: "Database PostgreSQL con interfaccia di amministrazione pgAdmin, pronto per lo sviluppo di applicazioni.",
     template: `version: '3'
 
 services:

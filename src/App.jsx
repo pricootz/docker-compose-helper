@@ -161,6 +161,7 @@ function App() {
   const { t, i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const [showPreview, setShowPreview] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
 
   // Funzione per cambiare lingua
   const changeLanguage = (lng) => {
@@ -686,6 +687,61 @@ function App() {
         )
       }
 
+      {/* Modal per scegliere un template */}
+      {
+        showTemplateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className={`p-6 rounded-lg shadow-lg ${darkMode ? 'bg-gray-800' : 'bg-white'} w-3/4 max-w-4xl max-h-[80vh] overflow-y-auto`}>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">{t('templates.selectTemplate')}</h3>
+                <button
+                  onClick={() => setShowTemplateModal(false)}
+                  className={`p-1 rounded-full ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {Object.entries(dockerComposeTemplates).map(([id, template]) => (
+                  <div
+                    key={id}
+                    className={`p-4 border rounded-lg cursor-pointer ${darkMode ? 'border-gray-700 hover:bg-gray-700' : 'border-gray-200 hover:bg-gray-50'}`}
+                    onClick={() => {
+                      loadTemplate(id);
+                      setShowTemplateModal(false);
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      {template.icon === 'database' && <Database className="h-5 w-5" />}
+                      {template.icon === 'server' && <Server className="h-5 w-5" />}
+                      {template.icon === 'code' && <Code className="h-5 w-5" />}
+                      {template.icon === 'fileText' && <FileText className="h-5 w-5" />}
+                      <span className="font-medium">{template.name}</span>
+                    </div>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {template.description || t('templates.noDescription')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setShowTemplateModal(false)}
+                  className={`px-4 py-2 rounded ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'}`}
+                >
+                  {t('templates.cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       {/* Sezione Configurazioni Salvate */}
       {
         savedConfigurations.length > 0 && (
@@ -802,34 +858,15 @@ function App() {
               {t('editor.analyze')}
             </button>
 
-            {/* Dropdown per i template */}
-            <div className="relative group">
-              <button
-                className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
-                title={t('templates.loadTemplate')}
-              >
-                <Plus className="h-4 w-4" />
-                {t('templates.loadTemplate')}
-              </button>
-              <div className={`absolute left-0 mt-2 w-72 rounded-md shadow-lg z-10 hidden group-hover:block ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                <div className="py-1">
-                  {Object.entries(dockerComposeTemplates).map(([id, template]) => (
-                    <button
-                      key={id}
-                      onClick={() => loadTemplate(id)}
-                      className={`w-full text-left px-4 py-2 flex items-center gap-2 ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'}`}
-                    >
-                      {template.icon === 'database' && <Database className="h-4 w-4" />}
-                      {template.icon === 'server' && <Server className="h-4 w-4" />}
-                      {template.icon === 'code' && <Code className="h-4 w-4" />}
-                      {template.icon === 'fileText' && <FileText className="h-4 w-4" />}
-                      <span>{template.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-            {/* Pulsante per generare docker-compose modificato */}
+            {/* Pulsante per aprire il modal dei template */}
+            <button
+              className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+              onClick={() => setShowTemplateModal(true)}
+              title={t('templates.loadTemplate')}
+            >
+              <Plus className="h-4 w-4" />
+              {t('templates.loadTemplate')}
+            </button>            {/* Pulsante per generare docker-compose modificato */}
             {variables.length > 0 && (
               <button
                 onClick={generateModifiedDockerCompose}
