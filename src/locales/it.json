@@ -11,7 +11,9 @@
     "uploadFile": "Carica File",
     "analyze": "Analizza Configurazione",
     "error": "YAML non valido: {{message}}",
-    "preview": "Anteprima con Variabili"
+    "preview": "Anteprima con Variabili",
+    "original": "File originale",
+    "previewTitle": "Anteprima con variabili"
   },
   "variables": {
     "title": "Variabili Ambiente Rilevate",
@@ -67,6 +69,9 @@
   },
   "templates": {
     "loadTemplate": "Carica Template",
-    "confirmOverwrite": "Questo sostituirà il contenuto attuale. Continuare?"
+    "confirmOverwrite": "Questo sostituirà il contenuto attuale. Continuare?",
+    "selectTemplate": "Seleziona Template",
+    "noDescription": "Nessuna descrizione disponibile",
+    "cancel": "Annulla"
   }
 }

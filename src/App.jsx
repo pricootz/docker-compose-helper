@@ -162,6 +162,7 @@ function App() {
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
   const [showPreview, setShowPreview] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
 
   // Funzione per cambiare lingua
   const changeLanguage = (lng) => {
@@ -456,6 +457,12 @@ function App() {
     loadSavedConfigurations();
   }, []);
 
+  useEffect(() => {
+    if (showPreview && variables.length > 0) {
+      generatePreviewContent();
+    }
+  }, [variables, showPreview]);
+
   // Componente Tooltip personalizzato
   const Tooltip = ({ text, children }) => {
     const [isVisible, setIsVisible] = useState(false);
@@ -520,22 +527,24 @@ function App() {
   const generatePreviewContent = () => {
     try {
       // Crea una copia del contenuto originale
-      let previewContent = dockerComposeContent;
+      let content = dockerComposeContent;
 
       // Sostituisci tutte le variabili con i loro valori
       variables.forEach(variable => {
         if (variable.value) {
           // Sostituisci ${VARIABLE} con il valore
           const pattern1 = new RegExp(`\\$\\{${variable.name}(:.*?)?\\}`, 'g');
-          previewContent = previewContent.replace(pattern1, variable.value);
+          content = content.replace(pattern1, variable.value);
 
           // Sostituisci $VARIABLE con il valore
           const pattern2 = new RegExp(`\\$${variable.name}(?![A-Z0-9_])`, 'g');
-          previewContent = previewContent.replace(pattern2, variable.value);
+          content = content.replace(pattern2, variable.value);
         }
       });
 
-      return previewContent;
+      // Aggiorna lo stato del contenuto dell'anteprima
+      setPreviewContent(content);
+      return content;
     } catch (e) {
       console.error('Errore nella generazione del preview:', e);
       return dockerComposeContent;
@@ -782,7 +791,7 @@ function App() {
 
             {/* Toggle per l'anteprima - visibile solo quando ci sono variabili */}
             {variables.length > 0 && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-full">
                 <span className="text-sm">{t('editor.preview')}</span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -794,7 +803,7 @@ function App() {
                   <div className={`w-11 h-6 rounded-full peer ${darkMode
                     ? 'bg-gray-700 peer-checked:bg-blue-600'
                     : 'bg-gray-200 peer-checked:bg-blue-500'
-                    } peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
+                    } peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
                 </label>
               </div>
             )}
@@ -807,31 +816,90 @@ function App() {
             </div>
           )}
           <div className="flex-1 mt-4">
-            <AceEditor
-              mode="yaml"
-              theme={darkMode ? "monokai" : "tomorrow"}
-              name="docker-compose-editor"
-              value={showPreview && variables.length > 0 ? generatePreviewContent() : dockerComposeContent}
-              onChange={setDockerComposeContent}
-              fontSize={14}
-              width="100%"
-              height="100%"
-              showPrintMargin={false}
-              showGutter={true}
-              highlightActiveLine={true}
-              readOnly={showPreview}
-              setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-                enableSnippets: true,
-                showLineNumbers: true,
-                tabSize: 2,
-                useSoftTabs: true,
-                wrapEnabled: true
-              }}
-              className="border rounded"
-              placeholder={t('editor.placeholder')}
-            />
+            {showPreview && variables.length > 0 ? (
+              <div className="grid grid-cols-2 gap-4 h-full">
+                <div className="border rounded">
+                  <div className={`px-3 py-2 text-sm font-medium ${darkMode ? 'bg-gray-700 border-b border-gray-600' : 'bg-gray-100 border-b border-gray-200'}`}>
+                    {t('editor.original')}
+                  </div>
+                  <AceEditor
+                    mode="yaml"
+                    theme={darkMode ? "monokai" : "tomorrow"}
+                    name="docker-compose-editor-original"
+                    value={dockerComposeContent}
+                    onChange={setDockerComposeContent}
+                    fontSize={14}
+                    width="100%"
+                    height="calc(100% - 36px)"
+                    showPrintMargin={false}
+                    showGutter={true}
+                    highlightActiveLine={true}
+                    readOnly={false}
+                    setOptions={{
+                      enableBasicAutocompletion: true,
+                      enableLiveAutocompletion: true,
+                      enableSnippets: true,
+                      showLineNumbers: true,
+                      tabSize: 2,
+                      useSoftTabs: true,
+                      wrapEnabled: true
+                    }}
+                    className="border-0"
+                  />
+                </div>
+                <div className="border rounded">
+                  <div className={`px-3 py-2 text-sm font-medium ${darkMode ? 'bg-gray-700 border-b border-gray-600' : 'bg-gray-100 border-b border-gray-200'}`}>
+                    {t('editor.preview')}
+                  </div>
+                  <AceEditor
+                    mode="yaml"
+                    theme={darkMode ? "monokai" : "tomorrow"}
+                    name="docker-compose-editor-preview"
+                    value={previewContent}
+                    fontSize={14}
+                    width="100%"
+                    height="calc(100% - 36px)"
+                    showPrintMargin={false}
+                    showGutter={true}
+                    highlightActiveLine={false}
+                    readOnly={true}
+                    setOptions={{
+                      showLineNumbers: true,
+                      tabSize: 2,
+                      useSoftTabs: true,
+                      wrapEnabled: true
+                    }}
+                    className="border-0"
+                  />
+                </div>
+              </div>
+            ) : (
+              <AceEditor
+                mode="yaml"
+                theme={darkMode ? "monokai" : "tomorrow"}
+                name="docker-compose-editor"
+                value={dockerComposeContent}
+                onChange={setDockerComposeContent}
+                fontSize={14}
+                width="100%"
+                height="100%"
+                showPrintMargin={false}
+                showGutter={true}
+                highlightActiveLine={true}
+                readOnly={false}
+                setOptions={{
+                  enableBasicAutocompletion: true,
+                  enableLiveAutocompletion: true,
+                  enableSnippets: true,
+                  showLineNumbers: true,
+                  tabSize: 2,
+                  useSoftTabs: true,
+                  wrapEnabled: true
+                }}
+                className="border rounded"
+                placeholder={t('editor.placeholder')}
+              />
+            )}
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             <input
@@ -1012,6 +1080,17 @@ function App() {
                                         ...prev,
                                         [variable.name]: error
                                       }));
+
+                                      // Forza l'aggiornamento dell'anteprima
+                                      if (showPreview) {
+                                        // Usa un timer per evitare troppi aggiornamenti in sequenza
+                                        if (window.previewUpdateTimeout) {
+                                          clearTimeout(window.previewUpdateTimeout);
+                                        }
+                                        window.previewUpdateTimeout = setTimeout(() => {
+                                          setPreviewKey(prev => prev + 1);
+                                        }, 200);
+                                      }
                                     }}
                                     className={`mt-1 w-full px-2 py-1 border rounded text-sm ${validationErrors[variable.name]
                                       ? 'border-red-500 bg-red-50 text-red-800'

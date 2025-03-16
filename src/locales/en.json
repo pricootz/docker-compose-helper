@@ -11,7 +11,9 @@
     "uploadFile": "Upload File",
     "analyze": "Analyze Configuration",
     "error": "Invalid YAML: {{message}}",
-    "preview": "Preview with Variables"
+    "preview": "Preview with Variables",
+    "original": "Original File",
+    "previewTitle": "Preview with Variables"
   },
   "variables": {
     "title": "Detected Environment Variables",
@@ -67,6 +69,9 @@
   },
   "templates": {
     "loadTemplate": "Load Template",
-    "confirmOverwrite": "This will replace your current content. Continue?"
+    "confirmOverwrite": "This will replace your current content. Continue?",
+    "selectTemplate": "Select Template",
+    "noDescription": "No description available",
+    "cancel": "Cancel"
   }
 }
