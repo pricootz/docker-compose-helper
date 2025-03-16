@@ -10,7 +10,8 @@
     "placeholder": "# Paste your docker-compose.yml here...",
     "uploadFile": "Upload File",
     "analyze": "Analyze Configuration",
-    "error": "Invalid YAML: {{message}}"
+    "error": "Invalid YAML: {{message}}",
+    "preview": "Preview with Variables"
   },
   "variables": {
     "title": "Detected Environment Variables",
@@ -26,7 +27,12 @@
     "generateCompose": "Generate docker-compose",
     "generateComposeTooltip": "Generate a docker-compose.yml with variables replaced",
     "save": "Save",
-    "saveTooltip": "Save this configuration for future use"
+    "saveTooltip": "Save this configuration for future use",
+    "importEnv": "Import .env",
+    "importEnvTooltip": "Import variables from a .env file"
+  },
+  "envImport": {
+    "error": "Error importing .env file: {{message}}"
   },
   "saveDialog": {
     "title": "Save Configuration",
@@ -51,5 +57,16 @@
     "required": "Field required",
     "password": "Password too short (min 8 characters)",
     "path": "Invalid path"
+  },
+  "linter": {
+    "title": "File Analysis",
+    "noIssues": "No issues detected",
+    "errors": "Errors",
+    "warnings": "Warnings",
+    "suggestions": "Suggestions"
+  },
+  "templates": {
+    "loadTemplate": "Load Template",
+    "confirmOverwrite": "This will replace your current content. Continue?"
   }
 }

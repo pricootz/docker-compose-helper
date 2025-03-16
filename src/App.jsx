@@ -1,8 +1,11 @@
+import { lintDockerCompose, suggestImprovements } from './utils/dockerComposeLinter';
 import { useState, useEffect } from 'react';
-import { Upload, FileCode, Download, AlertCircle, Key, Database, HardDrive, Server, Info, Globe, Github } from 'lucide-react';
+import { Upload, FileCode, Download, AlertCircle, Key, Database, HardDrive, Server, Info, Globe, Github, Code, FileText, Plus } from 'lucide-react';
+import { dockerComposeTemplates } from './utils/dockerComposeTemplates';
 import yaml from 'js-yaml';
 import AceEditor from 'react-ace';
 import { useTranslation } from 'react-i18next';
+import { parseEnvFile } from './utils/envFileParser';
 
 // Importazioni necessarie per Ace Editor
 import 'ace-builds/src-noconflict/mode-yaml';
@@ -147,6 +150,8 @@ function App() {
   const [dockerComposeContent, setDockerComposeContent] = useState('');
   const [variables, setVariables] = useState([]);
   const [error, setError] = useState('');
+  const [lintResults, setLintResults] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
   const [validationErrors, setValidationErrors] = useState({});
   const [darkMode, setDarkMode] = useState(false);
   const [savedConfigurations, setSavedConfigurations] = useState([]);
@@ -155,6 +160,7 @@ function App() {
   const [originalVariables, setOriginalVariables] = useState({});
   const { t, i18n } = useTranslation();
   const [currentLanguage, setCurrentLanguage] = useState(i18n.language);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Funzione per cambiare lingua
   const changeLanguage = (lng) => {
@@ -189,6 +195,14 @@ function App() {
     try {
       const yamlContent = yaml.load(dockerComposeContent);
       setError('');
+
+      // Esegui il linting
+      const lintResult = lintDockerCompose(dockerComposeContent);
+      setLintResults(lintResult);
+
+      // Ottieni i suggerimenti
+      const improvementSuggestions = suggestImprovements(dockerComposeContent);
+      setSuggestions(improvementSuggestions);
 
       const foundVariables = new Map();
       const lines = dockerComposeContent.split('\n');
@@ -462,13 +476,90 @@ function App() {
     );
   };
 
+  const handleEnvFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const envContent = e.target.result;
+          const envVariables = parseEnvFile(envContent);
+
+          // Aggiorna le variabili esistenti con i valori dal file .env
+          const updatedVariables = variables.map(variable => {
+            if (envVariables.hasOwnProperty(variable.name)) {
+              return {
+                ...variable,
+                value: envVariables[variable.name],
+                modified: envVariables[variable.name] !== originalVariables[variable.name]
+              };
+            }
+            return variable;
+          });
+
+          setVariables(updatedVariables);
+
+          // Aggiorna la validazione
+          const errors = {};
+          updatedVariables.forEach(variable => {
+            const errorMsg = validateVariable(variable.name, variable.value);
+            if (errorMsg) {
+              errors[variable.name] = errorMsg;
+            }
+          });
+          setValidationErrors(errors);
+        } catch (error) {
+          setError(t('envImport.error', { message: error.message }));
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const generatePreviewContent = () => {
+    try {
+      // Crea una copia del contenuto originale
+      let previewContent = dockerComposeContent;
+
+      // Sostituisci tutte le variabili con i loro valori
+      variables.forEach(variable => {
+        if (variable.value) {
+          // Sostituisci ${VARIABLE} con il valore
+          const pattern1 = new RegExp(`\\$\\{${variable.name}(:.*?)?\\}`, 'g');
+          previewContent = previewContent.replace(pattern1, variable.value);
+
+          // Sostituisci $VARIABLE con il valore
+          const pattern2 = new RegExp(`\\$${variable.name}(?![A-Z0-9_])`, 'g');
+          previewContent = previewContent.replace(pattern2, variable.value);
+        }
+      });
+
+      return previewContent;
+    } catch (e) {
+      console.error('Errore nella generazione del preview:', e);
+      return dockerComposeContent;
+    }
+  };
+
+  const loadTemplate = (templateId) => {
+    const template = dockerComposeTemplates[templateId];
+    if (template) {
+      // Chiedi conferma se c'è già del contenuto
+      if (dockerComposeContent.trim() && !window.confirm(t('templates.confirmOverwrite'))) {
+        return;
+      }
+
+      setDockerComposeContent(template.template);
+      setError('');
+    }
+  };
   return (
     <div className={`min-h-screen w-screen flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
       {/* Header */}
       <nav
         className={`w-full shadow-sm py-4 px-6 flex items-center justify-between border-b ${darkMode
-            ? 'bg-gray-800 text-white border-gray-700'
-            : 'bg-white text-gray-900 border-gray-200'
+          ? 'bg-gray-800 text-white border-gray-700'
+          : 'bg-white text-gray-900 border-gray-200'
           }`}
       >
         <div className="flex items-center gap-2">
@@ -499,8 +590,8 @@ function App() {
             target="_blank"
             rel="noopener noreferrer"
             className={`p-2 rounded-full transition-colors duration-200 ${darkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              ? 'bg-gray-700 hover:bg-gray-600 text-white'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
               }`}
             title={t('header.github')}
           >
@@ -511,8 +602,8 @@ function App() {
           <button
             onClick={toggleDarkMode}
             className={`p-2 rounded-full transition-colors duration-200 ${darkMode
-                ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              ? 'bg-gray-700 hover:bg-gray-600 text-white'
+              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
               }`}
             title={darkMode ? t('header.lightMode') : t('header.darkMode')}
           >
@@ -630,7 +721,29 @@ function App() {
       <div className="flex flex-1 p-6 gap-6">
         {/* Left Panel */}
         <div className={`flex-1 rounded-lg shadow p-6 flex flex-col ${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
-          <h2 className={`font-medium text-lg border-b pb-3 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>{t('editor.title')}</h2>
+          <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h2 className="font-medium text-lg">{t('editor.title')}</h2>
+
+            {/* Toggle per l'anteprima - visibile solo quando ci sono variabili */}
+            {variables.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm">{t('editor.preview')}</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={showPreview}
+                    onChange={() => setShowPreview(!showPreview)}
+                  />
+                  <div className={`w-11 h-6 rounded-full peer ${darkMode
+                    ? 'bg-gray-700 peer-checked:bg-blue-600'
+                    : 'bg-gray-200 peer-checked:bg-blue-500'
+                    } peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all`}></div>
+                </label>
+              </div>
+            )}
+          </div>
+
           {error && (
             <div className={`mt-4 p-3 rounded-md flex items-center gap-2 ${darkMode ? 'bg-red-900 border-red-800 text-red-200' : 'bg-red-50 border border-red-200 text-red-700'}`}>
               <AlertCircle className="h-5 w-5" />
@@ -642,7 +755,7 @@ function App() {
               mode="yaml"
               theme={darkMode ? "monokai" : "tomorrow"}
               name="docker-compose-editor"
-              value={dockerComposeContent}
+              value={showPreview && variables.length > 0 ? generatePreviewContent() : dockerComposeContent}
               onChange={setDockerComposeContent}
               fontSize={14}
               width="100%"
@@ -650,6 +763,7 @@ function App() {
               showPrintMargin={false}
               showGutter={true}
               highlightActiveLine={true}
+              readOnly={showPreview}
               setOptions={{
                 enableBasicAutocompletion: true,
                 enableLiveAutocompletion: true,
@@ -663,7 +777,7 @@ function App() {
               placeholder={t('editor.placeholder')}
             />
           </div>
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <input
               type="file"
               id="file-upload"
@@ -687,6 +801,62 @@ function App() {
             >
               {t('editor.analyze')}
             </button>
+
+            {/* Dropdown per i template */}
+            <div className="relative group">
+              <button
+                className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                title={t('templates.loadTemplate')}
+              >
+                <Plus className="h-4 w-4" />
+                {t('templates.loadTemplate')}
+              </button>
+              <div className={`absolute left-0 mt-2 w-72 rounded-md shadow-lg z-10 hidden group-hover:block ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="py-1">
+                  {Object.entries(dockerComposeTemplates).map(([id, template]) => (
+                    <button
+                      key={id}
+                      onClick={() => loadTemplate(id)}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-2 ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'}`}
+                    >
+                      {template.icon === 'database' && <Database className="h-4 w-4" />}
+                      {template.icon === 'server' && <Server className="h-4 w-4" />}
+                      {template.icon === 'code' && <Code className="h-4 w-4" />}
+                      {template.icon === 'fileText' && <FileText className="h-4 w-4" />}
+                      <span>{template.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Dropdown per i template */}
+            <div className="relative group">
+              <button
+                className={`px-4 py-2 rounded-md flex items-center gap-2 ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                title={t('templates.loadTemplate')}
+              >
+                <Plus className="h-4 w-4" />
+                {t('templates.loadTemplate')}
+              </button>
+              <div className={`absolute left-0 mt-2 w-72 rounded-md shadow-lg z-10 hidden group-hover:block ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="py-1">
+                  {Object.entries(dockerComposeTemplates).map(([id, template]) => (
+                    <button
+                      key={id}
+                      onClick={() => loadTemplate(id)}
+                      className={`w-full text-left px-4 py-2 flex items-center gap-2 ${darkMode ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-100 text-gray-800'}`}
+                    >
+                      {template.icon === 'database' && <Database className="h-4 w-4" />}
+                      {template.icon === 'server' && <Server className="h-4 w-4" />}
+                      {template.icon === 'code' && <Code className="h-4 w-4" />}
+                      {template.icon === 'fileText' && <FileText className="h-4 w-4" />}
+                      <span>{template.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -697,6 +867,22 @@ function App() {
             <div className="flex gap-2">
               {variables.length > 0 && (
                 <>
+                  <input
+                    type="file"
+                    id="env-file-upload"
+                    className="hidden"
+                    accept=".env"
+                    onChange={handleEnvFileUpload}
+                  />
+                  <button
+                    onClick={() => document.getElementById('env-file-upload').click()}
+                    className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'
+                      }`}
+                    title={t('actions.importEnvTooltip')}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {t('actions.importEnv')}
+                  </button>
                   <button
                     onClick={generateEnvFile}
                     className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm ${darkMode ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
@@ -704,16 +890,7 @@ function App() {
                   >
                     <Download className="h-4 w-4" />
                     {t('actions.generateEnv')}
-                  </button>
-                  <button
-                    onClick={generateModifiedDockerCompose}
-                    className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm ${darkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                    title={t('actions.generateComposeTooltip')}
-                  >
-                    <FileCode className="h-4 w-4" />
-                    {t('actions.generateCompose')}
-                  </button>
-                  <button
+                  </button>                  <button
                     onClick={() => setShowSaveDialog(true)}
                     className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm ${darkMode ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}`}
                     title={t('actions.saveTooltip')}
@@ -887,6 +1064,62 @@ function App() {
             )}
           </div>
         </div>
+        {/* Lint Results Panel - visibile solo quando sono presenti risultati */}
+        {lintResults && (
+          <div className={`flex-1 rounded-lg shadow p-6 flex flex-col mt-6 ${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'}`}>
+            <div className={`flex justify-between items-center border-b pb-3 ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <h2 className="font-medium text-lg">{t('linter.title')}</h2>
+            </div>
+            <div className="mt-4 space-y-4">
+              {lintResults.errors.length === 0 && lintResults.warnings.length === 0 && suggestions.length === 0 ? (
+                <div className={`p-4 rounded-lg ${darkMode ? 'bg-green-900 text-green-100' : 'bg-green-50 text-green-800'}`}>
+                  <p className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    {t('linter.noIssues')}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {lintResults.errors.length > 0 && (
+                    <div className={`p-4 rounded-lg ${darkMode ? 'bg-red-900 text-red-100' : 'bg-red-50 text-red-700'}`}>
+                      <h3 className="font-medium mb-2">{t('linter.errors')}</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lintResults.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {lintResults.warnings.length > 0 && (
+                    <div className={`p-4 rounded-lg ${darkMode ? 'bg-yellow-900 text-yellow-100' : 'bg-yellow-50 text-yellow-700'}`}>
+                      <h3 className="font-medium mb-2">{t('linter.warnings')}</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {lintResults.warnings.map((warning, index) => (
+                          <li key={index}>{warning}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {suggestions.length > 0 && (
+                    <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900 text-blue-100' : 'bg-blue-50 text-blue-700'}`}>
+                      <h3 className="font-medium mb-2">{t('linter.suggestions')}</h3>
+                      <ul className="list-disc list-inside space-y-1">
+                        {suggestions.map((suggestion, index) => (
+                          <li key={index}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div >
   );
