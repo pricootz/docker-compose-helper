@@ -544,7 +544,8 @@ function App() {
   }, [variables, showPreview]);
 
   // Componente Tooltip personalizzato
-  const Tooltip = ({ text, children }) => {
+  // Componente Tooltip migliorato
+  const Tooltip = ({ text, children, width = "w-64", position = "left-6" }) => {
     const [isVisible, setIsVisible] = useState(false);
 
     return (
@@ -552,11 +553,16 @@ function App() {
         <div
           onMouseEnter={() => setIsVisible(true)}
           onMouseLeave={() => setIsVisible(false)}
+          className="cursor-help"
         >
           {children}
         </div>
         {isVisible && (
-          <div className={`absolute z-10 w-64 p-2 text-xs rounded shadow-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'} -mt-1 left-6`}>
+          <div
+            className={`absolute z-20 ${width} p-3 text-xs rounded-md shadow-lg 
+          ${darkMode ? 'bg-gray-700 text-white border border-gray-600' : 'bg-white text-gray-800 border border-gray-200'} 
+          -mt-1 ${position} animate-fade-in`}
+          >
             {text}
           </div>
         )}
@@ -1090,7 +1096,13 @@ function App() {
                       <div className={`px-4 py-2 font-medium text-sm flex items-center justify-between ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                         <div className="flex items-center gap-2">
                           {categories[categoryKey].icon}
-                          {t(`categories.${categoryKey}`)}
+                          <span>{t(`categories.${categoryKey}`)}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">({categoryVariables.length})</span>
+                          {categoryVariables.some(v => v.modified) && (
+                            <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${darkMode ? 'bg-yellow-600 text-yellow-100' : 'bg-yellow-100 text-yellow-800'}`}>
+                              {categoryVariables.filter(v => v.modified).length} {t('variables.modified').toLowerCase()}
+                            </span>
+                          )}
                         </div>
                         {categoryVariables.some(v => v.modified) && (
                           <button
@@ -1142,44 +1154,65 @@ function App() {
                                   )}
                                 </div>
                                 <div className="relative">
-                                  <input
-                                    type="text"
-                                    value={variable.value}
-                                    onChange={(e) => {
-                                      const newValue = e.target.value;
-                                      const newVariables = [...variables];
-                                      const index = variables.findIndex(v => v.name === variable.name);
-                                      newVariables[index].value = newValue;
-                                      // Imposta modified a true se il valore è diverso dall'originale
-                                      newVariables[index].modified = newValue !== originalVariables[variable.name];
-                                      setVariables(newVariables);
+                                  <div className="flex items-center">
+                                    <input
+                                      type="text"
+                                      value={variable.value}
+                                      onChange={(e) => {
+                                        const newValue = e.target.value;
+                                        const newVariables = [...variables];
+                                        const index = variables.findIndex(v => v.name === variable.name);
+                                        newVariables[index].value = newValue;
+                                        // Imposta modified a true se il valore è diverso dall'originale
+                                        newVariables[index].modified = newValue !== originalVariables[variable.name];
+                                        setVariables(newVariables);
 
-                                      // Validare il nuovo valore
-                                      const error = validateVariable(variable.name, newValue);
-                                      setValidationErrors(prev => ({
-                                        ...prev,
-                                        [variable.name]: error
-                                      }));
-
-                                      // Forza l'aggiornamento dell'anteprima
-                                      if (showPreview) {
-                                        // Usa un timer per evitare troppi aggiornamenti in sequenza
-                                        if (window.previewUpdateTimeout) {
-                                          clearTimeout(window.previewUpdateTimeout);
-                                        }
-                                        window.previewUpdateTimeout = setTimeout(() => {
-                                          setPreviewKey(prev => prev + 1);
-                                        }, 200);
-                                      }
-                                    }}
-                                    className={`mt-1 w-full px-2 py-1 border rounded text-sm ${validationErrors[variable.name]
-                                      ? 'border-red-500 bg-red-50 text-red-800'
-                                      : darkMode
-                                        ? 'bg-gray-700 border-gray-600 text-white'
-                                        : 'bg-white border-gray-300 text-gray-800'
-                                      }`}
-                                    placeholder={t('variables.inputPlaceholder')}
-                                  />
+                                        // Validare il nuovo valore
+                                        const error = validateVariable(variable.name, newValue);
+                                        setValidationErrors(prev => ({
+                                          ...prev,
+                                          [variable.name]: error
+                                        }));
+                                      }}
+                                      className={`mt-1 w-full px-2 py-1 border rounded-l text-sm ${validationErrors[variable.name]
+                                        ? 'border-red-500 bg-red-50 text-red-800'
+                                        : darkMode
+                                          ? 'bg-gray-700 border-gray-600 text-white'
+                                          : 'bg-white border-gray-300 text-gray-800'
+                                        }`}
+                                      placeholder={t('variables.inputPlaceholder')}
+                                    />
+                                    {variable.category === 'ports' && (
+                                      <Tooltip
+                                        text={t('tooltips.portInfo')}
+                                        position="right-0"
+                                      >
+                                        <div className={`mt-1 px-2 py-1 border-t border-r border-b rounded-r ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
+                                          <Server className="h-4 w-4" />
+                                        </div>
+                                      </Tooltip>
+                                    )}
+                                    {variable.category === 'paths' && (
+                                      <Tooltip
+                                        text={t('tooltips.pathInfo')}
+                                        position="right-0"
+                                      >
+                                        <div className={`mt-1 px-2 py-1 border-t border-r border-b rounded-r ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
+                                          <HardDrive className="h-4 w-4" />
+                                        </div>
+                                      </Tooltip>
+                                    )}
+                                    {variable.category === 'security' && (
+                                      <Tooltip
+                                        text={t('tooltips.securityInfo')}
+                                        position="right-0"
+                                      >
+                                        <div className={`mt-1 px-2 py-1 border-t border-r border-b rounded-r ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-300' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>
+                                          <Key className="h-4 w-4" />
+                                        </div>
+                                      </Tooltip>
+                                    )}
+                                  </div>
                                   {validationErrors[variable.name] && (
                                     <div className={`flex items-center gap-1 text-xs mt-1 ${darkMode ? 'text-red-400' : 'text-red-500'}`}>
                                       <AlertCircle className="h-3 w-3" />

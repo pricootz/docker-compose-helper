@@ -74,5 +74,11 @@
     "selectTemplate": "Seleziona Template",
     "noDescription": "Nessuna descrizione disponibile",
     "cancel": "Annulla"
+  },
+  "tooltips": {
+    "portInfo": "I numeri di porta devono essere compresi tra 1 e 65535. Le porte sotto 1024 richiedono privilegi elevati.",
+    "pathInfo": "I percorsi dovrebbero iniziare con '/', './' o '../'. Assicurati che il percorso sull'host esista.",
+    "securityInfo": "I dati sensibili dovrebbero essere complessi e specifici per ogni ambiente.",
+    "serviceConfigInfo": "Questi parametri configurano direttamente il comportamento del servizio Docker."
   }
 }
