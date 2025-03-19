@@ -52,6 +52,7 @@
     "paths": "Paths",
     "ports": "Ports",
     "security": "Security",
+    "serviceConfig": "Service Configuration",
     "other": "Other"
   },
   "validation": {

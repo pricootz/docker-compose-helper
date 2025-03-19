@@ -128,6 +128,23 @@ const categories = {
       SECRET_KEY: 'password'
     }
   },
+  serviceConfig: {
+    label: 'Configurazione Servizi',
+    icon: <Server className="h-4 w-4" />,
+    suggestions: {},
+    descriptions: {
+      PORT_HOST: 'Porta esposta sull\'host',
+      PORT_CONTAINER: 'Porta interna del container',
+      VOLUME_HOST: 'Percorso sul sistema host',
+      VOLUME_CONTAINER: 'Percorso nel container',
+      IMAGE: 'Immagine Docker da utilizzare',
+      RESTART: 'Policy di riavvio del container'
+    },
+    validators: {
+      PORT_HOST: 'port',
+      PORT_CONTAINER: 'port'
+    }
+  },
   other: {
     label: 'Altre',
     icon: <Info className="h-4 w-4" />,
@@ -140,9 +157,10 @@ const categories = {
 // Funzione helper per categorizzare automaticamente le variabili
 const categorizeVariable = (name) => {
   if (name.includes('DB_') || name.includes('DATABASE_') || name.includes('POSTGRES_') || name.includes('MYSQL_') || name.includes('MONGO_')) return 'database';
-  if (name.includes('PATH') || name.includes('DIR') || name.includes('FOLDER') || name.includes('VOLUME')) return 'paths';
-  if (name.includes('PORT')) return 'ports';
+  if (name.includes('PATH') || name.includes('DIR') || name.includes('FOLDER') || name.includes('VOLUME_')) return 'paths';
+  if (name.includes('PORT_')) return 'ports';
   if (name.includes('SECRET') || name.includes('KEY') || name.includes('TOKEN') || name.includes('PASS')) return 'security';
+  if (name.includes('IMAGE_') || name.includes('RESTART_')) return 'serviceConfig';
   return 'other';
 };
 
@@ -256,6 +274,68 @@ function App() {
           });
         }
       });
+
+      // Cerchiamo anche elementi importanti come porte e volumi
+      if (yamlContent && yamlContent.services) {
+        Object.entries(yamlContent.services).forEach(([serviceName, service]) => {
+          // Rileva porte
+          if (service.ports) {
+            service.ports.forEach((port, index) => {
+              let portValue = '';
+              let hostPort = '';
+
+              if (typeof port === 'string') {
+                const parts = port.split(':');
+                if (parts.length >= 2) {
+                  hostPort = parts[0];
+                  portValue = parts[1];
+                } else {
+                  portValue = parts[0];
+                }
+              } else if (typeof port === 'number') {
+                portValue = port.toString();
+              }
+
+              if (hostPort && !foundVariables.has(`PORT_${serviceName}_${index}_HOST`)) {
+                foundVariables.set(`PORT_${serviceName}_${index}_HOST`, hostPort);
+              }
+              if (portValue && !foundVariables.has(`PORT_${serviceName}_${index}_CONTAINER`)) {
+                foundVariables.set(`PORT_${serviceName}_${index}_CONTAINER`, portValue);
+              }
+            });
+          }
+
+          // Rileva volumi
+          if (service.volumes) {
+            service.volumes.forEach((volume, index) => {
+              if (typeof volume === 'string') {
+                const parts = volume.split(':');
+                if (parts.length >= 2) {
+                  const hostPath = parts[0];
+                  const containerPath = parts[1];
+
+                  if (!foundVariables.has(`VOLUME_${serviceName}_${index}_HOST`)) {
+                    foundVariables.set(`VOLUME_${serviceName}_${index}_HOST`, hostPath);
+                  }
+                  if (!foundVariables.has(`VOLUME_${serviceName}_${index}_CONTAINER`)) {
+                    foundVariables.set(`VOLUME_${serviceName}_${index}_CONTAINER`, containerPath);
+                  }
+                }
+              }
+            });
+          }
+
+          // Rileva l'immagine
+          if (service.image && !foundVariables.has(`IMAGE_${serviceName}`)) {
+            foundVariables.set(`IMAGE_${serviceName}`, service.image);
+          }
+
+          // Rileva il restart policy
+          if (service.restart && !foundVariables.has(`RESTART_${serviceName}`)) {
+            foundVariables.set(`RESTART_${serviceName}`, service.restart);
+          }
+        });
+      }
 
       const newVariables = Array.from(foundVariables).map(([name, defaultValue]) => ({
         name,

@@ -52,6 +52,7 @@
     "paths": "Percorsi",
     "ports": "Porte",
     "security": "Sicurezza",
+    "serviceConfig": "Configurazione Servizi",
     "other": "Altre"
   },
   "validation": {
